@@ -2,6 +2,7 @@
 
 #include <string>
 #include <iostream>
+#include <cmath>
 
 #ifdef __cpp_lib_filesystem
   #include <filesystem>
