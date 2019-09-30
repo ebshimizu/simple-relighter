@@ -278,6 +278,40 @@ NAN_METHOD(Relighter::renderToFile) {
   }
 }
 
+NAN_METHOD(Relighter::renderToCanvas) {
+  Relighter *self = Nan::ObjectWrap::Unwrap<Relighter>(info.This());
+
+  vector<float> params;
+  v8::Local<v8::Array> args = info[0].As<v8::Array>();
+  for (unsigned int i = 0; i < args->Length(); i++) {
+    params.push_back((float)Nan::To<double>(Nan::Get(args, i).ToLocalChecked().As<v8::Number>()).ToChecked());
+  }
+
+  // check exist other params
+  float gamma = 2.2f;
+  if (info[2]->IsNumber()) {
+    gamma = (float)Nan::To<double>(info[2]).ToChecked();
+  }
+
+  float level = 1.0f;
+  if (info[3]->IsNumber()) {
+    level = (float)Nan::To<double>(info[3]).ToChecked();
+  }
+
+  try {
+    vector<unsigned char> imData = self->_render(params, gamma, level);
+
+    // the black magic part where you grab the canvas buffer directly
+    v8::Local<v8::Uint8ClampedArray> arr = Nan::Get(info[1].As<v8::Object>(), Nan::New("data").ToLocalChecked()).ToLocalChecked().As<v8::Uint8ClampedArray>();
+    unsigned char *data = (unsigned char*)arr->Buffer()->GetContents().Data();
+
+    memcpy(data, &imData[0], imData.size());
+  }
+  catch (exception e) {
+    return Nan::ThrowError(e.what());
+  }
+}
+
 NAN_GETTER(Relighter::getters) {
   Relighter *self = Nan::ObjectWrap::Unwrap<Relighter>(info.This());
 
@@ -285,6 +319,12 @@ NAN_GETTER(Relighter::getters) {
 
   if (prop == "filecount") {
     info.GetReturnValue().Set((int)self->_imageData.size());
+  }
+  else if (prop == "width") {
+    info.GetReturnValue().Set((int)self->_width);
+  }
+  else if (prop == "height") {
+    info.GetReturnValue().Set((int)self->_height);
   }
   else if (prop == "paramKey") {
     info.GetReturnValue().Set(self->_paramKey());
