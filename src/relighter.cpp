@@ -93,6 +93,7 @@ NAN_MODULE_INIT(Relighter::Init) {
 
   Nan::SetPrototypeMethod(tpl, "load", load);
   Nan::SetPrototypeMethod(tpl, "renderToFile", renderToFile);
+  Nan::SetPrototypeMethod(tpl, "renderToCanvas", renderToCanvas);
 
   constructor.Reset(Nan::GetFunction(tpl).ToLocalChecked());
   Nan::Set(target, Nan::New("Relighter").ToLocalChecked(), Nan::GetFunction(tpl).ToLocalChecked());
