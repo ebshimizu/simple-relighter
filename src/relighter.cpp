@@ -159,16 +159,19 @@ v8::Local<v8::Object> Relighter::_paramKey() {
     auto hParam = Nan::New<v8::Object>();
     Nan::Set(hParam, Nan::New("name").ToLocalChecked(), Nan::New(to_string(i) + "-hue").ToLocalChecked());
     Nan::Set(hParam, Nan::New("parent").ToLocalChecked(), Nan::New(to_string(i)).ToLocalChecked());
+    Nan::Set(hParam, Nan::New("default").ToLocalChecked(), Nan::New(0));
 
     // sat
     auto sParam = Nan::New<v8::Object>();
     Nan::Set(sParam, Nan::New("name").ToLocalChecked(), Nan::New(to_string(i) + "-saturation").ToLocalChecked());
     Nan::Set(sParam, Nan::New("parent").ToLocalChecked(), Nan::New(to_string(i)).ToLocalChecked());
+    Nan::Set(sParam, Nan::New("default").ToLocalChecked(), Nan::New(0));
 
     // val
     auto vParam = Nan::New<v8::Object>();
     Nan::Set(vParam, Nan::New("name").ToLocalChecked(), Nan::New(to_string(i) + "-value").ToLocalChecked());
     Nan::Set(vParam, Nan::New("parent").ToLocalChecked(), Nan::New(to_string(i)).ToLocalChecked());
+    Nan::Set(vParam, Nan::New("default").ToLocalChecked(), Nan::New(1));
 
     Nan::Set(params, Nan::New(i * 3), hParam);
     Nan::Set(params, Nan::New(i * 3 + 1), sParam);
