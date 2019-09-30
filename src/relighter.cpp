@@ -90,6 +90,8 @@ NAN_MODULE_INIT(Relighter::Init) {
 
   Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("filecount").ToLocalChecked(), Relighter::getters);
   Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("paramKey").ToLocalChecked(), Relighter::getters);
+  Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("width").ToLocalChecked(), Relighter::getters);
+  Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("height").ToLocalChecked(), Relighter::getters);
 
   Nan::SetPrototypeMethod(tpl, "load", load);
   Nan::SetPrototypeMethod(tpl, "renderToFile", renderToFile);
