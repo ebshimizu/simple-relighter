@@ -11,8 +11,8 @@
                 "<!(node -e \"require('nan')\")",
                 "src/third-party"
             ],
-            'cflags!': ['-fno-exceptions'],
-            'cflags_cc!': ['-fno-exceptions'],
+            'cflags!': ['-fno-exceptions', '-fno-rtti'],
+            'cflags_cc!': ['-fno-exceptions', '-fno-rtti'],
             'conditions': [
                 ['OS=="mac"', {
                     'xcode_settings': {
