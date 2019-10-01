@@ -1,4 +1,6 @@
 #include "relighter.h"
+#include "third-party/ghc/filesystem.hpp"
+namespace fs = ghc::filesystem;
 
 // helpers
 bool hasEnding(std::string const &fullString, std::string const &ending) {
