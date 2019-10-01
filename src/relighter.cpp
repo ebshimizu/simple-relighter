@@ -128,7 +128,7 @@ void Relighter::_load(string dir) {
       unsigned err = lodepng::decode(img, width, height, file);
 
       if (err) {
-        throw exception(lodepng_error_text(err));
+        throw runtime_error(lodepng_error_text(err));
       }
 
       // decompress to float
@@ -188,10 +188,10 @@ v8::Local<v8::Object> Relighter::_paramKey() {
 
 vector<unsigned char> Relighter::_render(vector<float> params, float gamma, float level) {
   if (_imageData.size() == 0)
-    throw exception("Need at least one input image to use render command");
+    throw runtime_error("Need at least one input image to use render command");
 
   if (params.size() != _imageData.size() * 3)
-    throw exception(string("Parameter input vector does not match expected params. Got " + to_string(params.size()) + ". Expected " + to_string(_imageData.size() * 3)).c_str());
+    throw runtime_error(string("Parameter input vector does not match expected params. Got " + to_string(params.size()) + ". Expected " + to_string(_imageData.size() * 3)).c_str());
 
   // per layer operations, render to float buffer first, alpha is 1 during all of this
   vector<float> renderBuffer(_width * _height * 4, 0);
@@ -226,7 +226,7 @@ void Relighter::_renderToFile(vector<float> params, string file, float gamma, fl
 
   unsigned err = lodepng::encode(file, img, _width, _height);
   if (err) {
-    throw exception(lodepng_error_text(err));
+    throw runtime_error(lodepng_error_text(err));
   }
 }
 
