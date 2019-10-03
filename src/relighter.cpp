@@ -3,16 +3,20 @@
 namespace fs = ghc::filesystem;
 
 // helpers
-bool hasEnding(std::string const &fullString, std::string const &ending) {
-  if (fullString.length() >= ending.length()) {
+bool hasEnding(std::string const &fullString, std::string const &ending)
+{
+  if (fullString.length() >= ending.length())
+  {
     return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
   }
-  else {
+  else
+  {
     return false;
   }
 }
 
-vector<float> hsvToRgb(float H, float S, float V) {
+vector<float> hsvToRgb(float H, float S, float V)
+{
   // Normalize H
   H = H * 360.0f;
 
@@ -21,32 +25,38 @@ vector<float> hsvToRgb(float H, float S, float V) {
   float X = C * (1 - abs(fmod(Hp, 2) - 1));
 
   float R, G, B;
-  if (0 <= Hp && Hp < 1) {
+  if (0 <= Hp && Hp < 1)
+  {
     R = C;
     G = X;
     B = 0;
   }
-  else if (1 <= Hp && Hp < 2) {
+  else if (1 <= Hp && Hp < 2)
+  {
     R = X;
     G = C;
     B = 0;
   }
-  else if (2 <= Hp && Hp < 3) {
+  else if (2 <= Hp && Hp < 3)
+  {
     R = 0;
     G = C;
     B = X;
   }
-  else if (3 <= Hp && Hp < 4) {
+  else if (3 <= Hp && Hp < 4)
+  {
     R = 0;
     G = X;
     B = C;
   }
-  else if (4 <= Hp && Hp < 5) {
+  else if (4 <= Hp && Hp < 5)
+  {
     R = X;
     G = 0;
     B = C;
   }
-  else if (5 <= Hp && Hp < 6) {
+  else if (5 <= Hp && Hp < 6)
+  {
     R = C;
     G = 0;
     B = X;
@@ -61,7 +71,8 @@ vector<float> hsvToRgb(float H, float S, float V) {
   return rgb;
 }
 
-inline float clamp(float x, float min, float max) {
+inline float clamp(float x, float min, float max)
+{
   if (x < min)
     return min;
   if (x > max)
@@ -69,10 +80,12 @@ inline float clamp(float x, float min, float max) {
   return x;
 }
 
-vector<unsigned char> toneMap(vector<float>& img, float gamma = 2.2f, float level = 1.0f) {
+vector<unsigned char> toneMap(vector<float> &img, float gamma = 2.2f, float level = 1.0f)
+{
   vector<unsigned char> tonedImg(img.size(), 0);
 
-  for (int i = 0; i < img.size() / 4; i++) {
+  for (int i = 0; i < img.size() / 4; i++)
+  {
     tonedImg[i * 4] = (unsigned char)(clamp(pow(img[i * 4] * level, gamma), 0, 1) * 255);
     tonedImg[i * 4 + 1] = (unsigned char)(clamp(pow(img[i * 4 + 1] * level, gamma), 0, 1) * 255);
     tonedImg[i * 4 + 2] = (unsigned char)(clamp(pow(img[i * 4 + 2] * level, gamma), 0, 1) * 255);
@@ -85,7 +98,8 @@ vector<unsigned char> toneMap(vector<float>& img, float gamma = 2.2f, float leve
 // nan module def
 Nan::Persistent<v8::Function> Relighter::constructor;
 
-NAN_MODULE_INIT(Relighter::Init) {
+NAN_MODULE_INIT(Relighter::Init)
+{
   v8::Local<v8::FunctionTemplate> tpl = Nan::New<v8::FunctionTemplate>(New);
   tpl->SetClassName(Nan::New("Relighter").ToLocalChecked());
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
@@ -110,26 +124,31 @@ NAN_MODULE_INIT(Relighter::Init) {
 
 Relighter::Relighter() {}
 
-Relighter::~Relighter() {
+Relighter::~Relighter()
+{
   // free image memory
 }
 
-void Relighter::_load(string dir) {
+void Relighter::_load(string dir)
+{
   // clear previous vector
   _imageData = vector<vector<float>>();
 
   // list files in directory
-  for (const auto& entry : fs::directory_iterator(dir)) {
+  for (const auto &entry : fs::directory_iterator(dir))
+  {
     string file = entry.path().string();
 
     // load .png files
-    if (hasEnding(file, ".png")) {
+    if (hasEnding(file, ".png"))
+    {
       vector<unsigned char> img;
       unsigned width, height;
 
       unsigned err = lodepng::decode(img, width, height, file);
 
-      if (err) {
+      if (err)
+      {
         throw runtime_error(lodepng_error_text(err));
       }
 
@@ -141,15 +160,19 @@ void Relighter::_load(string dir) {
   }
 }
 
-vector<float> Relighter::_decompress(vector<unsigned char>& img) {
+vector<float> Relighter::_decompress(vector<unsigned char> &img)
+{
   vector<float> newImg(img.size());
 
   // leave alpha channel alone
-  for (int i = 0; i < img.size(); i++) {
-    if (i % 4 == 3) {
+  for (int i = 0; i < img.size(); i++)
+  {
+    if (i % 4 == 3)
+    {
       newImg[i] = img[i] / 255.f;
     }
-    else {
+    else
+    {
       newImg[i] = pow(img[i] / 255.0f, 2.2f);
     }
   }
@@ -157,10 +180,12 @@ vector<float> Relighter::_decompress(vector<unsigned char>& img) {
   return newImg;
 }
 
-v8::Local<v8::Object> Relighter::_paramKey() {
+v8::Local<v8::Object> Relighter::_paramKey()
+{
   auto params = Nan::New<v8::Array>();
 
-  for (int i = 0; i < this->_imageData.size(); i++) {
+  for (int i = 0; i < this->_imageData.size(); i++)
+  {
     // params are Hue, Sat, Val
     // hue
     auto hParam = Nan::New<v8::Object>();
@@ -188,7 +213,8 @@ v8::Local<v8::Object> Relighter::_paramKey() {
   return params;
 }
 
-vector<unsigned char> Relighter::_render(vector<float> params, float gamma, float level) {
+vector<unsigned char> Relighter::_render(vector<float> params, float gamma, float level)
+{
   if (_imageData.size() == 0)
     throw runtime_error("Need at least one input image to use render command");
 
@@ -198,18 +224,20 @@ vector<unsigned char> Relighter::_render(vector<float> params, float gamma, floa
   // per layer operations, render to float buffer first, alpha is 1 during all of this
   vector<float> renderBuffer(_width * _height * 4, 0);
 
-  for (int i = 0; i < _imageData.size(); i++) {
-    auto& img = _imageData[i];
+  for (int i = 0; i < _imageData.size(); i++)
+  {
+    auto &img = _imageData[i];
     // convert param to hsv
     auto mod = hsvToRgb(params[i * 3], params[i * 3 + 1], params[i * 3 + 2]);
     float rMod = mod[0];
     float gMod = mod[1];
     float bMod = mod[2];
 
-    for (int px = 0; px < _width * _height; px++) {
+    for (int px = 0; px < _width * _height; px++)
+    {
       // get pixel
       const int idx = px * 4;
-      
+
       // modulate and add to render buffer
       renderBuffer[idx] += img[idx] * rMod;
       renderBuffer[idx + 1] += img[idx + 1] * gMod;
@@ -223,47 +251,56 @@ vector<unsigned char> Relighter::_render(vector<float> params, float gamma, floa
   return finalImg;
 }
 
-void Relighter::_renderToFile(vector<float> params, string file, float gamma, float level) {
+void Relighter::_renderToFile(vector<float> params, string file, float gamma, float level)
+{
   auto img = _render(params, gamma, level);
 
   unsigned err = lodepng::encode(file, img, _width, _height);
-  if (err) {
+  if (err)
+  {
     throw runtime_error(lodepng_error_text(err));
   }
 }
 
 // exposed methods
 
-NAN_METHOD(Relighter::New) {
+NAN_METHOD(Relighter::New)
+{
   // nothing is copied at the moment
-  Relighter* obj = new Relighter();
+  Relighter *obj = new Relighter();
   obj->Wrap(info.This());
   info.GetReturnValue().Set(info.This());
 }
 
-NAN_METHOD(Relighter::load) {
+NAN_METHOD(Relighter::load)
+{
   // load files from the specified directory
-  Relighter* obj = Nan::ObjectWrap::Unwrap<Relighter>(info.This());
+  Relighter *obj = Nan::ObjectWrap::Unwrap<Relighter>(info.This());
   Nan::Utf8String dirval(info[0]);
-  if (dirval.length() <= 0) {
+  if (dirval.length() <= 0)
+  {
     return Nan::ThrowTypeError("directory path (arg 0) must be a non-empty string");
   }
 
   string dir(*dirval, dirval.length());
-  try {
+  try
+  {
     obj->_load(dir);
   }
-  catch (exception e) {
+  catch (exception e)
+  {
     return Nan::ThrowError(e.what());
   }
 }
 
-NAN_METHOD(Relighter::renderToFile) {
+NAN_METHOD(Relighter::renderToFile)
+{
   Relighter *self = Nan::ObjectWrap::Unwrap<Relighter>(info.This());
 
   vector<float> params;
   v8::Local<v8::Array> args = info[0].As<v8::Array>();
-  for (unsigned int i = 0; i < args->Length(); i++) {
+  for (unsigned int i = 0; i < args->Length(); i++)
+  {
     params.push_back((float)Nan::To<double>(Nan::Get(args, i).ToLocalChecked().As<v8::Number>()).ToChecked());
   }
 
@@ -271,82 +308,95 @@ NAN_METHOD(Relighter::renderToFile) {
 
   // check exist other params
   float gamma = 2.2f;
-  if (info[2]->IsNumber()) {
+  if (info[2]->IsNumber())
+  {
     gamma = (float)Nan::To<double>(info[2]).ToChecked();
   }
 
   float level = 1.0f;
-  if (info[3]->IsNumber()) {
+  if (info[3]->IsNumber())
+  {
     level = (float)Nan::To<double>(info[3]).ToChecked();
   }
-  
-  try {
+
+  try
+  {
     self->_renderToFile(params, file, gamma, level);
   }
-  catch (exception e) {
+  catch (exception e)
+  {
     return Nan::ThrowError(e.what());
   }
 }
 
-NAN_METHOD(Relighter::renderToCanvas) {
+NAN_METHOD(Relighter::renderToCanvas)
+{
   Relighter *self = Nan::ObjectWrap::Unwrap<Relighter>(info.This());
 
   vector<float> params;
   v8::Local<v8::Array> args = info[0].As<v8::Array>();
-  for (unsigned int i = 0; i < args->Length(); i++) {
+  for (unsigned int i = 0; i < args->Length(); i++)
+  {
     params.push_back((float)Nan::To<double>(Nan::Get(args, i).ToLocalChecked().As<v8::Number>()).ToChecked());
   }
 
   // check exist other params
   float gamma = 2.2f;
-  if (info[2]->IsNumber()) {
+  if (info[2]->IsNumber())
+  {
     gamma = (float)Nan::To<double>(info[2]).ToChecked();
   }
 
   float level = 1.0f;
-  if (info[3]->IsNumber()) {
+  if (info[3]->IsNumber())
+  {
     level = (float)Nan::To<double>(info[3]).ToChecked();
   }
 
-  try {
+  try
+  {
     vector<unsigned char> imData = self->_render(params, gamma, level);
 
     // the black magic part where you grab the canvas buffer directly
     v8::Local<v8::Uint8ClampedArray> arr = Nan::Get(info[1].As<v8::Object>(), Nan::New("data").ToLocalChecked()).ToLocalChecked().As<v8::Uint8ClampedArray>();
-    unsigned char *data = (unsigned char*)arr->Buffer()->GetContents().Data();
+    unsigned char *data = (unsigned char *)arr->Buffer()->GetContents().Data();
 
     memcpy(data, &imData[0], imData.size());
   }
-  catch (exception e) {
+  catch (exception e)
+  {
     return Nan::ThrowError(e.what());
   }
 }
 
-NAN_METHOD(Relighter::renderAsync) {
+NAN_METHOD(Relighter::renderAsync)
+{
   Relighter *self = Nan::ObjectWrap::Unwrap<Relighter>(info.This());
 
   vector<float> params;
   v8::Local<v8::Array> args = info[0].As<v8::Array>();
-  for (unsigned int i = 0; i < args->Length(); i++) {
+  for (unsigned int i = 0; i < args->Length(); i++)
+  {
     params.push_back((float)Nan::To<double>(Nan::Get(args, i).ToLocalChecked().As<v8::Number>()).ToChecked());
   }
 
   // check exist other params
   float gamma = (float)Nan::To<double>(info[1]).ToChecked();
   float level = (float)Nan::To<double>(info[2]).ToChecked();
-  Nan::Callback* cb = new Nan::Callback(Nan::To<v8::Function>(info[3]).ToLocalChecked());
+  Nan::Callback *cb = new Nan::Callback(Nan::To<v8::Function>(info[3]).ToLocalChecked());
 
   Nan::AsyncQueueWorker(new RenderWorker(cb, self, params, gamma, level));
 }
 
-NAN_METHOD(Relighter::transferToContext) {
+NAN_METHOD(Relighter::transferToContext)
+{
   Relighter *self = Nan::ObjectWrap::Unwrap<Relighter>(info.This());
-  ImageContainer* img = static_cast<ImageContainer*>(info[1].As<v8::External>()->Value());
+  ImageContainer *img = static_cast<ImageContainer *>(info[0].As<v8::External>()->Value());
   vector<unsigned char> imData = img->_buffer;
 
   // the black magic part where you grab the canvas buffer directly
-  v8::Local<v8::Uint8ClampedArray> arr = Nan::Get(info[2].As<v8::Object>(), Nan::New("data").ToLocalChecked()).ToLocalChecked().As<v8::Uint8ClampedArray>();
-  unsigned char *data = (unsigned char*)arr->Buffer()->GetContents().Data();
+  v8::Local<v8::Uint8ClampedArray> arr = Nan::Get(info[1].As<v8::Object>(), Nan::New("data").ToLocalChecked()).ToLocalChecked().As<v8::Uint8ClampedArray>();
+  unsigned char *data = (unsigned char *)arr->Buffer()->GetContents().Data();
 
   memcpy(data, &imData[0], imData.size());
 
@@ -354,51 +404,59 @@ NAN_METHOD(Relighter::transferToContext) {
   delete img;
 }
 
-NAN_GETTER(Relighter::getters) {
+NAN_GETTER(Relighter::getters)
+{
   Relighter *self = Nan::ObjectWrap::Unwrap<Relighter>(info.This());
 
   string prop = string(*Nan::Utf8String(property));
 
-  if (prop == "filecount") {
+  if (prop == "filecount")
+  {
     info.GetReturnValue().Set((int)self->_imageData.size());
   }
-  else if (prop == "width") {
+  else if (prop == "width")
+  {
     info.GetReturnValue().Set((int)self->_width);
   }
-  else if (prop == "height") {
+  else if (prop == "height")
+  {
     info.GetReturnValue().Set((int)self->_height);
   }
-  else if (prop == "paramKey") {
+  else if (prop == "paramKey")
+  {
     info.GetReturnValue().Set(self->_paramKey());
   }
-  else {
+  else
+  {
     info.GetReturnValue().Set(Nan::Undefined());
   }
 }
 
-RenderWorker::RenderWorker(Nan::Callback* cb, Relighter* rl, vector<float> params, float gamma, float level) :
-  AsyncWorker(cb), _rl(rl), _params(params), _gamma(gamma), _level(level)
-{ }
+RenderWorker::RenderWorker(Nan::Callback *cb, Relighter *rl, vector<float> params, float gamma, float level) : AsyncWorker(cb), _rl(rl), _params(params), _gamma(gamma), _level(level)
+{
+}
 
 RenderWorker::~RenderWorker() {}
 
-void RenderWorker::Execute() {
+void RenderWorker::Execute()
+{
   vector<unsigned char> img = _rl->_render(_params, _gamma, _level);
   _result = new ImageContainer(img);
 }
 
-void RenderWorker::HandleOKCallback() {
+void RenderWorker::HandleOKCallback()
+{
   Nan::HandleScope scope;
 
   v8::Local<v8::Value> argv[] = {
-    Nan::Null(),
-    Nan::New<v8::External>(_result)
-  };
+      Nan::Null(),
+      Nan::New<v8::External>(_result)};
 
   callback->Call(2, argv, async_resource);
 }
 
-void InitAll(v8::Local<v8::Object> exports) {
+void InitAll(v8::Local<v8::Object> exports)
+{
   Relighter::Init(exports);
 }
 
