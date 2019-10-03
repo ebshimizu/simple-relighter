@@ -98,6 +98,8 @@ NAN_MODULE_INIT(Relighter::Init) {
   Nan::SetPrototypeMethod(tpl, "load", load);
   Nan::SetPrototypeMethod(tpl, "renderToFile", renderToFile);
   Nan::SetPrototypeMethod(tpl, "renderToCanvas", renderToCanvas);
+  Nan::SetPrototypeMethod(tpl, "renderAsync", renderAsync);
+  Nan::SetPrototypeMethod(tpl, "transferToContext", transferToContext);
 
   constructor.Reset(Nan::GetFunction(tpl).ToLocalChecked());
   Nan::Set(target, Nan::New("Relighter").ToLocalChecked(), Nan::GetFunction(tpl).ToLocalChecked());
@@ -320,6 +322,38 @@ NAN_METHOD(Relighter::renderToCanvas) {
   }
 }
 
+NAN_METHOD(Relighter::renderAsync) {
+  Relighter *self = Nan::ObjectWrap::Unwrap<Relighter>(info.This());
+
+  vector<float> params;
+  v8::Local<v8::Array> args = info[0].As<v8::Array>();
+  for (unsigned int i = 0; i < args->Length(); i++) {
+    params.push_back((float)Nan::To<double>(Nan::Get(args, i).ToLocalChecked().As<v8::Number>()).ToChecked());
+  }
+
+  // check exist other params
+  float gamma = (float)Nan::To<double>(info[2]).ToChecked();
+  float level = (float)Nan::To<double>(info[3]).ToChecked();
+  Nan::Callback* cb = new Nan::Callback(Nan::To<v8::Function>(info[4]).ToLocalChecked());
+
+  Nan::AsyncQueueWorker(new RenderWorker(cb, self, params, gamma, level));
+}
+
+NAN_METHOD(Relighter::transferToContext) {
+  Relighter *self = Nan::ObjectWrap::Unwrap<Relighter>(info.This());
+  ImageContainer* img = static_cast<ImageContainer*>(info[1].As<v8::External>()->Value());
+  vector<unsigned char> imData = img->_buffer;
+
+  // the black magic part where you grab the canvas buffer directly
+  v8::Local<v8::Uint8ClampedArray> arr = Nan::Get(info[2].As<v8::Object>(), Nan::New("data").ToLocalChecked()).ToLocalChecked().As<v8::Uint8ClampedArray>();
+  unsigned char *data = (unsigned char*)arr->Buffer()->GetContents().Data();
+
+  memcpy(data, &imData[0], imData.size());
+
+  // dealloc image container
+  delete img;
+}
+
 NAN_GETTER(Relighter::getters) {
   Relighter *self = Nan::ObjectWrap::Unwrap<Relighter>(info.This());
 
@@ -340,6 +374,28 @@ NAN_GETTER(Relighter::getters) {
   else {
     info.GetReturnValue().Set(Nan::Undefined());
   }
+}
+
+RenderWorker::RenderWorker(Nan::Callback* cb, Relighter* rl, vector<float> params, float gamma, float level) :
+  AsyncWorker(cb), _rl(rl), _params(params), _gamma(gamma), _level(level)
+{ }
+
+RenderWorker::~RenderWorker() {}
+
+void RenderWorker::Execute() {
+  vector<unsigned char> img = _rl->_render(_params, _gamma, _level);
+  _result = new ImageContainer(img);
+}
+
+void RenderWorker::HandleOKCallback() {
+  Nan::HandleScope scope;
+
+  v8::Local<v8::Value> argv[] = {
+    Nan::Null(),
+    Nan::New<v8::External>(_result)
+  };
+
+  callback->Call(2, argv, async_resource);
 }
 
 void InitAll(v8::Local<v8::Object> exports) {
