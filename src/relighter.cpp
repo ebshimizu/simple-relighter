@@ -332,9 +332,9 @@ NAN_METHOD(Relighter::renderAsync) {
   }
 
   // check exist other params
-  float gamma = (float)Nan::To<double>(info[2]).ToChecked();
-  float level = (float)Nan::To<double>(info[3]).ToChecked();
-  Nan::Callback* cb = new Nan::Callback(Nan::To<v8::Function>(info[4]).ToLocalChecked());
+  float gamma = (float)Nan::To<double>(info[1]).ToChecked();
+  float level = (float)Nan::To<double>(info[2]).ToChecked();
+  Nan::Callback* cb = new Nan::Callback(Nan::To<v8::Function>(info[3]).ToLocalChecked());
 
   Nan::AsyncQueueWorker(new RenderWorker(cb, self, params, gamma, level));
 }
